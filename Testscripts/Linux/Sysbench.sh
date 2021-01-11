@@ -12,7 +12,7 @@
 #
 #   No optional parameters needed
 
-ROOT_DIR="/root"
+ROOT_DIR="/home/$USER"
 
 # For changing Sysbench version only the following parameter has to be changed
 SYSBENCH_VERSION=1.0.9
@@ -20,13 +20,13 @@ SYSBENCH_VERSION=1.0.9
 function Cpu_Test ()
 {
     LogMsg "Creating cpu.log and starting test."
-    sysbench cpu --num-threads=1 run > /root/cpu.log
+    sysbench cpu --num-threads=1 run > /home/$USER/cpu.log
     if [ $? -ne 0 ]; then
         LogMsg "ERROR: Unable to execute sysbench CPU. Aborting..."
         SetTestStateAborted
     fi
 
-    PASS_VALUE_CPU=$(cat /root/cpu.log |awk '/total time: / {print $3;}')
+    PASS_VALUE_CPU=$(cat /home/$USER/cpu.log |awk '/total time: / {print $3;}')
     if [ $? -ne 0 ]; then
         LogErr "Cannot find cpu.log."
         SetTestStateAborted
@@ -41,7 +41,7 @@ function Cpu_Test ()
         SetTestStateFailed
     fi
 
-    LogMsg "$(cat /root/cpu.log)"
+    LogMsg "$(cat /home/$USER/cpu.log)"
     return "$CPU_PASS"
 }
 
@@ -50,7 +50,7 @@ function File_Io ()
     sysbench fileio --num-threads=1 --file-test-mode=$1 prepare > /dev/null 2>&1
     LogMsg "Preparing files to test $1..."
 
-    sysbench fileio --num-threads=1 --file-test-mode=$1 run > /root/$1.log
+    sysbench fileio --num-threads=1 --file-test-mode=$1 run > /home/$USER/$1.log
     if [ $? -ne 0 ]; then
         LogErr "Unable to execute sysbench fileio mode $1. Aborting..."
         SetTestStateFailed
@@ -58,7 +58,7 @@ function File_Io ()
         LogMsg "Running $1 tests..."
     fi
 
-    PASS_VALUE_FILEIO=$(cat /root/$1.log |awk '/sum/ {print $2;}' | cut -d. -f1)
+    PASS_VALUE_FILEIO=$(cat /home/$USER/$1.log |awk '/sum/ {print $2;}' | cut -d. -f1)
     if [ $? -ne 0 ]; then
         LogErr "Cannot find $1.log."
         SetTestStateFailed
@@ -74,13 +74,14 @@ function File_Io ()
     sysbench fileio --num-threads=1 --file-test-mode=$1 cleanup
     LogMsg "Cleaning up $1 test files."
 
-    LogMsg "$(cat /root/$1.log)"
-    cat /root/$1.log >> /root/fileio.log
-    rm /root/$1.log
+    LogMsg "$(cat /home/$USER/$1.log)"
+    cat /home/$USER/$1.log >> /home/$USER/fileio.log
+    rm /home/$USER$1.log
     return "$FILEIO_PASS"
 }
 
 function Download_Sysbench() { 
+	pushd "$ROOT_DIR/"
     LogMsg "Cloning sysbench"
     wget https://github.com/akopytov/sysbench/archive/$SYSBENCH_VERSION.zip
     if [ $? -gt 0 ]; then
@@ -95,6 +96,7 @@ function Download_Sysbench() {
         SetTestStateFailed
         exit 0
     fi
+    popd
 }
 
 function Install_Deps() {
@@ -126,8 +128,8 @@ function Install_Deps() {
     pushd "$ROOT_DIR/sysbench-$SYSBENCH_VERSION"
     bash ./autogen.sh
     bash ./configure --without-mysql
-    make
-    make install
+    sudo make
+    sudo make install
     if [ $? -ne 0 ]; then
         LogErr "Unable to install sysbench. Aborting..."
         SetTestStateAborted
