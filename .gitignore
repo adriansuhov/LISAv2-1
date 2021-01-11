@@ -13,4 +13,8 @@ UploadStatusFile*
 Tools/kvp_*
 Tools/jq
 Tools/gawk
-DownloadedFiles*
+**/TestExecutionError*log
+**/TestExecution.log
+**/state.txt
+**/summary.log
+**/sysbench-1.0.9/
